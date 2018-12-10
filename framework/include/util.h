@@ -7,8 +7,14 @@
 
 #include <initializer_list>
 #include <string>
+#include <vector>
 
 namespace util {
+    template<typename T>
+    void bufferData(GLenum target, std::vector<T> data, GLenum usage) {
+        glBufferData(target, data.size() * sizeof(T), &data.front(), usage);
+    }
+
     void shaderFile(GLuint shader, const std::string &path) {
         const std::string str = readFile(path);
         const char *c_str = str.c_str();

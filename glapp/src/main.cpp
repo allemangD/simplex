@@ -4,6 +4,7 @@
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
 #include <glm/mat4x4.hpp>
+#include <glm/trigonometric.hpp>
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -19,12 +20,7 @@ struct Vertex {
 
 class GLApp : public App {
 private:
-    std::vector<Vertex> vertices = {
-        {glm::vec2(+0.5f, +0.5f), glm::vec3(1, 0, 0)},
-        {glm::vec2(+0.5f, -0.5f), glm::vec3(0, 1, 0)},
-        {glm::vec2(-0.5f, -0.5f), glm::vec3(0, 0, 1)},
-        {glm::vec2(-0.5f, +0.5f), glm::vec3(1, 1, 1)},
-    };
+    std::vector<Vertex> vertices;
 
     GLuint vertex_buffer = 0;
     GLuint vertex_shader = 0, fragment_shader = 0, program = 0;
@@ -37,11 +33,29 @@ protected:
     }
 
     void init() override {
+        vertices.push_back({
+            glm::vec2(0), glm::vec3(1)
+        });
+
+        const int N = 16;
+        const float TAU = 6.28318f;
+
+        for (int i = 0; i <= N; ++i) {
+            float t = (float) i / N;
+
+            auto p = glm::vec2(t) + glm::vec2(0, 1) / 4.f;
+            auto c = glm::vec3(t) + glm::vec3(0, 1, 2) / 3.f;
+
+            vertices.push_back({
+                glm::cos(TAU * p), glm::cos(TAU * c)
+            });
+        }
+
         setTitle("Hello Square!");
 
         glGenBuffers(1, &vertex_buffer);
         glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices.front(), GL_STATIC_DRAW);
+        util::bufferData(GL_ARRAY_BUFFER, vertices, GL_STATIC_DRAW);
 
         program = util::buildProgram({
             vertex_shader = util::buildShader("shaders/main.vert"),
@@ -52,11 +66,13 @@ protected:
         vpos_location = (GLuint) glGetAttribLocation(program, "vPos");
         vcol_location = (GLuint) glGetAttribLocation(program, "vCol");
 
+        glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
         glEnableVertexAttribArray(vpos_location);
         glVertexAttribPointer(vpos_location, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void *) nullptr);
-
         glEnableVertexAttribArray(vcol_location);
         glVertexAttribPointer(vcol_location, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void *) (sizeof(float) * 2));
+
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
     void display() override {
@@ -69,7 +85,6 @@ protected:
 
         glClear(GL_COLOR_BUFFER_BIT);
 
-
         auto pvm = glm::ortho(-ratio, ratio, -1.f, 1.f);
         pvm = glm::rotate(pvm, (float) glfwGetTime(), glm::vec3(0.f, 0.f, 1.f));
         pvm = glm::scale(pvm, glm::vec3(0.9f));
@@ -77,7 +92,7 @@ protected:
         glUseProgram(program);
         glUniformMatrix4fv(pvm_location, 1, GL_FALSE, glm::value_ptr(pvm));
 
-        glDrawArrays(GL_QUADS, 0, (GLsizei) vertices.size());
+        glDrawArrays(GL_TRIANGLE_FAN, 0, (GLsizei) vertices.size());
 
         swapBuffers();
     }

@@ -1,6 +1,6 @@
 #version 330
 
-in vec3 color;
+smooth in vec3 color;
 
 out vec4 fcolor;
 
