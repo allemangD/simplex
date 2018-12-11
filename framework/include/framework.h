@@ -16,6 +16,8 @@ private:
 
     static void onSize(GLFWwindow *window, int width, int height);
 
+    static void onCursorPos(GLFWwindow *window, double x, double y);
+
 protected:
     App(int gl_major, int gl_minor);
 
@@ -33,15 +35,17 @@ protected:
 
     void setSize(int width, int height);
 
+    void swapBuffers();
+
     virtual void onKey(int key, int scan_code, int action, int mods) {}
 
     virtual void onSize(int width, int height) {}
 
+    virtual void onCursorPos(double x, double y) {}
+
     virtual void init() {}
 
     virtual void display() {}
-
-    void swapBuffers();
 
 public:
     GLFWwindow *getWindow();

@@ -102,18 +102,26 @@ void App::close() {
 
 std::unordered_map<GLFWwindow *, App *> manager;
 
-void App::onKey(GLFWwindow *window, int key, int scan_code, int action, int mods) {
+App *get(GLFWwindow *window) {
     auto m = manager.find(window);
+    if (m == manager.end())
+        return nullptr;
+    return m->second;
+}
 
-    if (m != manager.end())
-        m->second->onKey(key, scan_code, action, mods);
+void App::onKey(GLFWwindow *window, int key, int scan_code, int action, int mods) {
+    auto *app = get(window);
+    if (app) app->onKey(key, scan_code, action, mods);
 }
 
 void App::onSize(GLFWwindow *window, int width, int height) {
-    auto m = manager.find(window);
+    auto *app = get(window);
+    if (app) app->onSize(width, height);
+}
 
-    if (m != manager.end())
-        m->second->onSize(width, height);
+void App::onCursorPos(GLFWwindow *window, double x, double y) {
+    auto *app = get(window);
+    if (app) app->onCursorPos(x, y);
 }
 
 int App::run() {
@@ -128,6 +136,7 @@ int App::run() {
 
     glfwSetWindowSizeCallback(getWindow(), App::onSize);
     glfwSetKeyCallback(getWindow(), App::onKey);
+    glfwSetCursorPosCallback(getWindow(), App::onCursorPos);
 
     glfwMakeContextCurrent(_window);
     gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
