@@ -6,4 +6,5 @@ add_executable(sample
 target_link_libraries(sample
         glad
         glm
+        glfw
         framework)

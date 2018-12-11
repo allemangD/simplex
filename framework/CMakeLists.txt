@@ -1,9 +1,10 @@
 project(framework)
 
 add_library(framework
-        src/hello.cpp)
+        src/framework.cpp)
 
 target_link_libraries(framework
+        glad
         glfw)
 
 target_include_directories(framework
@@ -13,4 +14,5 @@ target_include_directories(framework
         PRIVATE
         src)
 
-export(TARGETS framework glfw FILE FrameworkConfig.cmake)
+export(TARGETS framework glfw glad
+        FILE FrameworkConfig.cmake)

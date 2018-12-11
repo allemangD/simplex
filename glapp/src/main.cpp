@@ -1,7 +1,4 @@
-#include <hello.h>
-
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
+#include <framework.h>
 
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
@@ -12,13 +9,13 @@
 
 #include <cstdlib>
 #include <cstdio>
-#include <string>
 #include <vector>
 
 struct Vertex {
     glm::vec2 pos;
     glm::vec3 col;
 };
+
 static const char *vertex_shader_text =
         "uniform mat4 pvm;\n"
         "attribute vec3 vCol;\n"
@@ -39,20 +36,8 @@ static const char *fragment_shader_text =
         "}\n";
 
 
-static void error_callback(int error, const char *description) {
-    fprintf(stderr, "Error: %s\n", description);
-}
-
-
-static void key_callback(GLFWwindow *window, int key, int scan_code, int action, int mods) {
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, GLFW_TRUE);
-}
-
-
-int main() {
-    hello();
-
+class GLApp : public App {
+private:
     std::vector<Vertex> vertices = {
             {glm::vec2(+0.5f, +0.5f), glm::vec3(1, 0, 0)},
             {glm::vec2(+0.5f, -0.5f), glm::vec3(0, 1, 0)},
@@ -60,70 +45,52 @@ int main() {
             {glm::vec2(-0.5f, +0.5f), glm::vec3(1, 1, 1)},
     };
 
-    const int i_width = 1280, i_height = 720;
+    GLuint vertex_buffer = 0;
+    GLuint vertex_shader = 0, fragment_shader = 0, program = 0;
+    GLuint pvm_location = 0, vpos_location = 0, vcol_location = 0;
 
-    GLFWwindow *window;
-    GLFWmonitor *monitor;
-    const GLFWvidmode *mode;
-    GLuint vertex_buffer, vertex_shader, fragment_shader, program;
-    GLuint pvm_location, vpos_location, vcol_location;
-
-    glfwSetErrorCallback(error_callback);
-
-    if (!glfwInit()) {
-        exit(EXIT_FAILURE);
+protected:
+    void onKey(int key, int scan_code, int action, int mods) override {
+        if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+            close();
     }
 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+    void init() override {
+        setTitle("Hello Square!");
 
-    window = glfwCreateWindow(i_width, i_height, "Hello Triangle", nullptr, nullptr);
-    if (!window) {
-        glfwTerminate();
-        exit(EXIT_FAILURE);
+        glGenBuffers(1, &vertex_buffer);
+        glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices.front(), GL_STATIC_DRAW);
+
+        vertex_shader = glCreateShader(GL_VERTEX_SHADER);
+        glShaderSource(vertex_shader, 1, &vertex_shader_text, nullptr);
+        glCompileShader(vertex_shader);
+
+        fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
+        glShaderSource(fragment_shader, 1, &fragment_shader_text, nullptr);
+        glCompileShader(fragment_shader);
+
+        program = glCreateProgram();
+        glAttachShader(program, vertex_shader);
+        glAttachShader(program, fragment_shader);
+        glLinkProgram(program);
+
+        pvm_location = (GLuint) glGetUniformLocation(program, "pvm");
+        vpos_location = (GLuint) glGetAttribLocation(program, "vPos");
+        vcol_location = (GLuint) glGetAttribLocation(program, "vCol");
+
+        glEnableVertexAttribArray(vpos_location);
+        glVertexAttribPointer(vpos_location, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void *) nullptr);
+
+        glEnableVertexAttribArray(vcol_location);
+        glVertexAttribPointer(vcol_location, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void *) (sizeof(float) * 2));
     }
-    monitor = glfwGetPrimaryMonitor();
-    mode = glfwGetVideoMode(monitor);
-    glfwSetWindowPos(window, (mode->width - i_width) / 2, (mode->height - i_height) / 2);
 
-    glfwSetKeyCallback(window, key_callback);
-    glfwMakeContextCurrent(window);
-    gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
-    glfwSwapInterval(1);
-
-    // NOTE: OpenGL error checks have been omitted for brevity
-    glGenBuffers(1, &vertex_buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices.front(), GL_STATIC_DRAW);
-
-    vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertex_shader, 1, &vertex_shader_text, nullptr);
-    glCompileShader(vertex_shader);
-
-    fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragment_shader, 1, &fragment_shader_text, nullptr);
-    glCompileShader(fragment_shader);
-
-    program = glCreateProgram();
-    glAttachShader(program, vertex_shader);
-    glAttachShader(program, fragment_shader);
-    glLinkProgram(program);
-
-    pvm_location = (GLuint) glGetUniformLocation(program, "pvm");
-    vpos_location = (GLuint) glGetAttribLocation(program, "vPos");
-    vcol_location = (GLuint) glGetAttribLocation(program, "vCol");
-
-    glEnableVertexAttribArray(vpos_location);
-    glVertexAttribPointer(vpos_location, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void *) nullptr);
-
-    glEnableVertexAttribArray(vcol_location);
-    glVertexAttribPointer(vcol_location, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void *) (sizeof(float) * 2));
-
-    while (!glfwWindowShouldClose(window)) {
+    void display() override {
         int width, height;
         float ratio;
 
-        glfwGetFramebufferSize(window, &width, &height);
+        glfwGetFramebufferSize(getWindow(), &width, &height);
         ratio = (float) width / height;
         glViewport(0, 0, width, height);
 
@@ -139,11 +106,15 @@ int main() {
 
         glDrawArrays(GL_QUADS, 0, (GLsizei) vertices.size());
 
-        glfwSwapBuffers(window);
-        glfwPollEvents();
+        swapBuffers();
     }
 
-    glfwDestroyWindow(window);
-    glfwTerminate();
-    exit(EXIT_SUCCESS);
+public:
+    GLApp() : App(3, 0) {}
+};
+
+
+int main() {
+    GLApp app = GLApp();
+    app.launch();
 }
