@@ -82,6 +82,13 @@ protected:
         swapBuffers();
     }
 
+    void deinit() override {
+        glDeleteBuffers(1, &vertex_buffer);
+        glDeleteProgram(program);
+        glDeleteShader(vertex_shader);
+        glDeleteShader(fragment_shader);
+    }
+
 public:
     GLApp() : App(3, 0) {}
 };

@@ -152,6 +152,8 @@ int App::run() {
     };
     manager.erase(getWindow());
 
+    deinit();
+
     glfwDestroyWindow(_window);
 
     return EXIT_SUCCESS;

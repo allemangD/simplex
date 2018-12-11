@@ -47,6 +47,8 @@ protected:
 
     virtual void display() {}
 
+    virtual void deinit() {}
+
 public:
     GLFWwindow *getWindow();
 
