@@ -1,4 +1,5 @@
 #include <framework.h>
+#include <util.h>
 
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
@@ -16,33 +17,13 @@ struct Vertex {
     glm::vec3 col;
 };
 
-static const char *vertex_shader_text =
-        "uniform mat4 pvm;\n"
-        "attribute vec3 vCol;\n"
-        "attribute vec2 vPos;\n"
-        "varying vec3 color;\n"
-        "void main()\n"
-        "{\n"
-        "    gl_Position = pvm * vec4(vPos, 0.0, 1.0);\n"
-        "    color = vCol;\n"
-        "}\n";
-
-
-static const char *fragment_shader_text =
-        "varying vec3 color;\n"
-        "void main()\n"
-        "{\n"
-        "    gl_FragColor = vec4(color, 1.0);\n"
-        "}\n";
-
-
 class GLApp : public App {
 private:
     std::vector<Vertex> vertices = {
-            {glm::vec2(+0.5f, +0.5f), glm::vec3(1, 0, 0)},
-            {glm::vec2(+0.5f, -0.5f), glm::vec3(0, 1, 0)},
-            {glm::vec2(-0.5f, -0.5f), glm::vec3(0, 0, 1)},
-            {glm::vec2(-0.5f, +0.5f), glm::vec3(1, 1, 1)},
+        {glm::vec2(+0.5f, +0.5f), glm::vec3(1, 0, 0)},
+        {glm::vec2(+0.5f, -0.5f), glm::vec3(0, 1, 0)},
+        {glm::vec2(-0.5f, -0.5f), glm::vec3(0, 0, 1)},
+        {glm::vec2(-0.5f, +0.5f), glm::vec3(1, 1, 1)},
     };
 
     GLuint vertex_buffer = 0;
@@ -62,18 +43,10 @@ protected:
         glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
         glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices.front(), GL_STATIC_DRAW);
 
-        vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-        glShaderSource(vertex_shader, 1, &vertex_shader_text, nullptr);
-        glCompileShader(vertex_shader);
-
-        fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-        glShaderSource(fragment_shader, 1, &fragment_shader_text, nullptr);
-        glCompileShader(fragment_shader);
-
-        program = glCreateProgram();
-        glAttachShader(program, vertex_shader);
-        glAttachShader(program, fragment_shader);
-        glLinkProgram(program);
+        program = util::buildProgram({
+            vertex_shader = util::buildShader("shaders/main.vert"),
+            fragment_shader = util::buildShader("shaders/main.frag"),
+        });
 
         pvm_location = (GLuint) glGetUniformLocation(program, "pvm");
         vpos_location = (GLuint) glGetAttribLocation(program, "vPos");

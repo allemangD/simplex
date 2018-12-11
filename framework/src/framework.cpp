@@ -93,7 +93,7 @@ void App::center(GLFWmonitor *monitor) {
     getSize(&w, &h);
 
     setPos(x + (mode->width - w) / 2,
-           y + (mode->height - h) / 2);
+        y + (mode->height - h) / 2);
 }
 
 void App::close() {
