@@ -18,6 +18,8 @@ private:
 
     static void onCursorPos(GLFWwindow *window, double x, double y);
 
+    static void onMouseButton(GLFWwindow *window, int button, int action, int mods);
+
 protected:
     App(int gl_major, int gl_minor);
 
@@ -42,6 +44,8 @@ protected:
     virtual void onSize(int width, int height) {}
 
     virtual void onCursorPos(double x, double y) {}
+
+    virtual void onMouseButton(int button, int action, int mods) {}
 
     virtual void init() {}
 

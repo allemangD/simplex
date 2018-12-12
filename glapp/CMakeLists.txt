@@ -9,6 +9,9 @@ target_link_libraries(${PROJECT_NAME}
         glfw
         framework)
 
+target_include_directories(${PROJECT_NAME}
+        PRIVATE
+        include)
 
 set(SHADERS
         shaders/main.frag

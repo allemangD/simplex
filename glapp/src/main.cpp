@@ -1,5 +1,6 @@
 #include <framework.h>
 #include <util.h>
+#include "glmutil.h"
 
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
@@ -18,14 +19,33 @@ struct Vertex {
     glm::vec3 col;
 };
 
+struct Matrices {
+    glm::mat4 proj;
+    glm::mat4 view;
+    glm::mat4 model;
+};
+
 class GLApp : public App {
 private:
     std::vector<Vertex> vertices;
 
-    GLuint vertex_array = 0;
-    GLuint vertex_buffer = 0;
+    Matrices mats{
+        glm::identity<glm::mat4>(),
+        glm::identity<glm::mat4>(),
+        glm::identity<glm::mat4>(),
+    };
+
+    glm::vec2 mouse_root = glm::vec2(0);
+    glm::vec2 angle_root = glm::vec2(0);
+    glm::vec2 angles = glm::vec2(0);
+
+    GLuint circle_vert_arr = 0;
+    GLuint circle_vert_buf = 0, matrix_buffer = 0;
     GLuint vertex_shader = 0, fragment_shader = 0, program = 0;
-    GLuint pvm_location = 0, vpos_location = 0, vcol_location = 0;
+    GLuint vpos_location = 0, vcol_location = 0;
+    GLuint matrices_index = 0;
+
+    GLuint matrices_binding_point = 0;
 
 protected:
     void onKey(int key, int scan_code, int action, int mods) override {
@@ -33,12 +53,32 @@ protected:
             close();
     }
 
+    void onMouseButton(int button, int action, int mods) override {
+        if (button == 0 && action == GLFW_PRESS) {
+            double x, y;
+            glfwGetCursorPos(getWindow(), &x, &y);
+            mouse_root = glm::vec2(x, y);
+            angle_root = angles;
+        }
+    }
+
+    void onCursorPos(double x, double y)
+
+    override {
+        if (glfwGetMouseButton(getWindow(), 0)) {
+            auto dx = (float) x - mouse_root.x;
+            auto dy = (float) y - mouse_root.y;
+
+            angles = angle_root + glm::vec2(dx, dy) / 100.f;
+        }
+    }
+
     void init() override {
         vertices.push_back({
             glm::vec2(0), glm::vec3(1)
         });
 
-        const int N = 16;
+        const int N = 60;
         const float TAU = 6.28318f;
 
         for (int i = 0; i <= N; ++i) {
@@ -48,17 +88,18 @@ protected:
             auto c = glm::vec3(t) + glm::vec3(0, 1, 2) / 3.f;
 
             vertices.push_back({
-                glm::cos(TAU * p), glm::cos(TAU * c)
+                glm::cos(TAU * p),
+                glm::cos(TAU * c)
             });
         }
 
         setTitle("Hello Square!");
 
-        glGenVertexArrays(1, &vertex_array);
-        glBindVertexArray(vertex_array);
+        glGenVertexArrays(1, &circle_vert_arr);
+        glBindVertexArray(circle_vert_arr);
 
-        glGenBuffers(1, &vertex_buffer);
-        glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+        glGenBuffers(1, &circle_vert_buf);
+        glBindBuffer(GL_ARRAY_BUFFER, circle_vert_buf);
         util::bufferData(GL_ARRAY_BUFFER, vertices, GL_STATIC_DRAW);
 
         program = util::buildProgram({
@@ -66,11 +107,17 @@ protected:
             fragment_shader = util::buildShader("shaders/main.frag"),
         });
 
-        pvm_location = (GLuint) glGetUniformLocation(program, "pvm");
+        glGenBuffers(1, &matrix_buffer);
+
         vpos_location = (GLuint) glGetAttribLocation(program, "vPos");
         vcol_location = (GLuint) glGetAttribLocation(program, "vCol");
 
-        glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+        matrices_index = (GLuint) glGetUniformBlockIndex(program, "Matrices");
+        glBindBufferBase(GL_UNIFORM_BUFFER, matrices_binding_point, matrix_buffer);
+        glUniformBlockBinding(program, matrices_index, matrices_binding_point);
+        glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+        glBindBuffer(GL_ARRAY_BUFFER, circle_vert_buf);
         glEnableVertexAttribArray(vpos_location);
         glVertexAttribPointer(vpos_location, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void *) nullptr);
         glEnableVertexAttribArray(vcol_location);
@@ -80,31 +127,41 @@ protected:
         glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
-    void display() override {
+    void display()
+
+    override {
         int width, height;
         float ratio;
 
-        glfwGetFramebufferSize(getWindow(), &width, &height);
+        glfwGetFramebufferSize(getWindow(), &width, &height
+
+        );
         ratio = (float) width / height;
         glViewport(0, 0, width, height);
 
         glClear(GL_COLOR_BUFFER_BIT);
 
-        auto pvm = glm::ortho(-ratio, ratio, -1.f, 1.f);
-        pvm = glm::rotate(pvm, (float) glfwGetTime(), glm::vec3(0.f, 0.f, 1.f));
-        pvm = glm::scale(pvm, glm::vec3(0.9f));
+        mats.proj = glm::ortho(-ratio, ratio, -1.f, 1.f);
+        mats.view = glmutil::scale(glm::vec3(0.9f)) * glmutil::eulerAngles(glm::vec3(angles.y, 0, angles.x));
+        mats.model = glmutil::rotation((float) glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));
 
-        glBindVertexArray(vertex_array);
+        glBindBuffer(GL_UNIFORM_BUFFER, matrix_buffer);
+        glBufferData(GL_UNIFORM_BUFFER, sizeof(Matrices), &mats, GL_DYNAMIC_DRAW);
+        glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+        glBindVertexArray(circle_vert_arr);
         glUseProgram(program);
-        glUniformMatrix4fv(pvm_location, 1, GL_FALSE, glm::value_ptr(pvm));
         glDrawArrays(GL_TRIANGLE_FAN, 0, (GLsizei) vertices.size());
         glBindVertexArray(0);
 
         swapBuffers();
     }
 
-    void deinit() override {
-        glDeleteBuffers(1, &vertex_buffer);
+    void deinit()
+
+    override {
+        glDeleteBuffers(1, &circle_vert_buf);
+        glDeleteVertexArrays(1, &circle_vert_arr);
         glDeleteProgram(program);
         glDeleteShader(vertex_shader);
         glDeleteShader(fragment_shader);
@@ -116,6 +173,7 @@ public:
 
 
 int main() {
-    GLApp app = GLApp();
+    GLApp
+        app = GLApp();
     app.launch();
 }

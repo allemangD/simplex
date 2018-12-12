@@ -124,6 +124,11 @@ void App::onCursorPos(GLFWwindow *window, double x, double y) {
     if (app) app->onCursorPos(x, y);
 }
 
+void App::onMouseButton(GLFWwindow *window, int button, int action, int mods) {
+    auto *app = get(window);
+    if (app) app->onMouseButton(button, action, mods);
+}
+
 int App::run() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, _gl_major);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, _gl_minor);
@@ -137,6 +142,7 @@ int App::run() {
     glfwSetWindowSizeCallback(getWindow(), App::onSize);
     glfwSetKeyCallback(getWindow(), App::onKey);
     glfwSetCursorPosCallback(getWindow(), App::onCursorPos);
+    glfwSetMouseButtonCallback(getWindow(), App::onMouseButton);
 
     glfwMakeContextCurrent(_window);
     gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
