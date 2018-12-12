@@ -1,4 +1,4 @@
-#version 330
+#version 440 core
 
 smooth in vec3 color;
 

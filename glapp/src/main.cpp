@@ -22,6 +22,7 @@ class GLApp : public App {
 private:
     std::vector<Vertex> vertices;
 
+    GLuint vertex_array = 0;
     GLuint vertex_buffer = 0;
     GLuint vertex_shader = 0, fragment_shader = 0, program = 0;
     GLuint pvm_location = 0, vpos_location = 0, vcol_location = 0;
@@ -53,6 +54,9 @@ protected:
 
         setTitle("Hello Square!");
 
+        glGenVertexArrays(1, &vertex_array);
+        glBindVertexArray(vertex_array);
+
         glGenBuffers(1, &vertex_buffer);
         glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
         util::bufferData(GL_ARRAY_BUFFER, vertices, GL_STATIC_DRAW);
@@ -72,6 +76,7 @@ protected:
         glEnableVertexAttribArray(vcol_location);
         glVertexAttribPointer(vcol_location, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void *) (sizeof(float) * 2));
 
+        glBindVertexArray(0);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
@@ -89,10 +94,11 @@ protected:
         pvm = glm::rotate(pvm, (float) glfwGetTime(), glm::vec3(0.f, 0.f, 1.f));
         pvm = glm::scale(pvm, glm::vec3(0.9f));
 
+        glBindVertexArray(vertex_array);
         glUseProgram(program);
         glUniformMatrix4fv(pvm_location, 1, GL_FALSE, glm::value_ptr(pvm));
-
         glDrawArrays(GL_TRIANGLE_FAN, 0, (GLsizei) vertices.size());
+        glBindVertexArray(0);
 
         swapBuffers();
     }
@@ -105,7 +111,7 @@ protected:
     }
 
 public:
-    GLApp() : App(3, 0) {}
+    GLApp() : App(4, 4) {}
 };
 
 
