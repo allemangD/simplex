@@ -132,6 +132,8 @@ void App::onMouseButton(GLFWwindow *window, int button, int action, int mods) {
 int App::run() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, _gl_major);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, _gl_minor);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
     _title = "GLFW App";
 
     if (!(_window = glfwCreateWindow(1280, 720, _title.c_str(), nullptr, nullptr)))
