@@ -11,6 +11,9 @@ private:
     GLFWwindow *_window = nullptr;
     int _gl_major, _gl_minor;
     std::string _title;
+    float _last_time = 0, _time = 0, _rate = 1;
+    float _last_glfw_time = 0, _glfw_time = 0;
+    int _frame = 0;
 
     static void onKey(GLFWwindow *window, int key, int scan_code, int action, int mods);
 
@@ -22,6 +25,12 @@ private:
 
 protected:
     App(int gl_major, int gl_minor);
+
+    void setTime(float time);
+
+    void setFrame(int frame);
+
+    void setRate(float rate);
 
     void setTitle(std::string title);
 
@@ -55,6 +64,14 @@ protected:
 
 public:
     GLFWwindow *getWindow();
+
+    int getFrame();
+
+    float getRate();
+
+    float getTime();
+
+    float getTimeDelta();
 
     std::string getTitle();
 

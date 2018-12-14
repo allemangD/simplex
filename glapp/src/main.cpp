@@ -102,7 +102,7 @@ protected:
         glBindBuffer(GL_ARRAY_BUFFER, circle_vert_buf);
         util::bufferData(GL_ARRAY_BUFFER, vertices, GL_STATIC_DRAW);
 
-        program = util::buildProgram({
+        program = util::buildProgram(false, {
             vertex_shader = util::buildShader("shaders/main.vert"),
             fragment_shader = util::buildShader("shaders/main.frag"),
         });
@@ -133,9 +133,7 @@ protected:
         int width, height;
         float ratio;
 
-        glfwGetFramebufferSize(getWindow(), &width, &height
-
-        );
+        glfwGetFramebufferSize(getWindow(), &width, &height);
         ratio = (float) width / height;
         glViewport(0, 0, width, height);
 
@@ -143,7 +141,7 @@ protected:
 
         mats.proj = glm::ortho(-ratio, ratio, -1.f, 1.f);
         mats.view = glmutil::scale(glm::vec3(0.9f)) * glmutil::eulerAngles(glm::vec3(angles.y, 0, angles.x));
-        mats.model = glmutil::rotation((float) glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));
+        mats.model = glmutil::rotation(getTime(), glm::vec3(0.0f, 0.0f, 1.0f));
 
         glBindBuffer(GL_UNIFORM_BUFFER, matrix_buffer);
         glBufferData(GL_UNIFORM_BUFFER, sizeof(Matrices), &mats, GL_DYNAMIC_DRAW);
@@ -173,7 +171,6 @@ public:
 
 
 int main() {
-    GLApp
-        app = GLApp();
+    GLApp app = GLApp();
     app.launch();
 }

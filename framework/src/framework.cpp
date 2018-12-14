@@ -7,6 +7,18 @@ App::App(int gl_major, int gl_minor) {
     _gl_minor = gl_minor;
 }
 
+void App::setFrame(int frame) {
+    _frame = frame;
+}
+
+void App::setTime(float time) {
+    _time = time;
+}
+
+void App::setRate(float rate) {
+    _rate = rate;
+}
+
 void App::setTitle(std::string title) {
     _title = title;
     glfwSetWindowTitle(getWindow(), title.c_str());
@@ -42,6 +54,22 @@ void App::swapBuffers() {
 
 GLFWwindow *App::getWindow() {
     return _window;
+}
+
+int App::getFrame() {
+    return _frame;
+}
+
+float App::getTime() {
+    return _time;
+}
+
+float App::getRate() {
+    return _rate;
+}
+
+float App::getTimeDelta() {
+    return _time - _last_time;
 }
 
 std::string App::getTitle() {
@@ -139,6 +167,8 @@ int App::run() {
     if (!(_window = glfwCreateWindow(1280, 720, _title.c_str(), nullptr, nullptr)))
         return EXIT_FAILURE;
 
+    _last_glfw_time = (float) glfwGetTime();
+
     center();
 
     glfwSetWindowSizeCallback(getWindow(), App::onSize);
@@ -152,9 +182,18 @@ int App::run() {
 
     init();
 
+    _last_time = _time = 0;
+
     manager[getWindow()] = this;
     while (!glfwWindowShouldClose(_window)) {
+        _glfw_time = (float) glfwGetTime();
+
+        _time += (_glfw_time - _last_glfw_time) * _rate;
+
         display();
+
+        _last_time = _time;
+        _last_glfw_time = _glfw_time;
 
         glfwPollEvents();
     };

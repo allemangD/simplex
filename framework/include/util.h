@@ -1,3 +1,7 @@
+#include <utility>
+
+#include <utility>
+
 #ifndef GL_TEMPLATE_UTIL_H
 #define GL_TEMPLATE_UTIL_H
 
@@ -5,7 +9,6 @@
 
 #include <glad/glad.h>
 
-#include <initializer_list>
 #include <string>
 #include <vector>
 
@@ -15,13 +18,22 @@ namespace util {
         glBufferData(target, data.size() * sizeof(T), &data.front(), usage);
     }
 
-    void shaderFile(GLuint shader, const std::string &path) {
-        const std::string str = readFile(path);
-        const char *c_str = str.c_str();
-        glShaderSource(shader, 1, &c_str, nullptr);
+    template<typename T>
+    void bufferData(GLenum target, T &data, GLenum usage) {
+        glBufferData(target, sizeof(T), &data, usage);
     }
 
-    const std::string shaderInfoLog(GLuint shader) {
+    void shaderFiles(GLuint shader, std::vector<std::string> &paths) {
+        std::vector<std::string> strs;
+        std::vector<const char *> c_strs;
+
+        for (const auto &path : paths) strs.push_back(readFile(path));
+        for (const auto &str:strs) c_strs.push_back(str.c_str());
+
+        glShaderSource(shader, (GLsizei) c_strs.size(), &c_strs.front(), nullptr);
+    }
+
+    std::string shaderInfoLog(GLuint shader) {
         GLint log_len;
         glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &log_len);
         char log[log_len];
@@ -29,7 +41,7 @@ namespace util {
         return std::string(log);
     }
 
-    const std::string programInfoLog(GLuint program) {
+    std::string programInfoLog(GLuint program) {
         GLint log_len;
         glGetProgramiv(program, GL_INFO_LOG_LENGTH, &log_len);
         char log[log_len];
@@ -37,28 +49,17 @@ namespace util {
         return std::string(log);
     }
 
-    GLuint buildShader(const std::string &path) {
-        std::string ext = path.substr(path.rfind("."));
-
-        GLenum kind;
-        if (ext == ".vert") {
-            kind = GL_VERTEX_SHADER;
-        } else if (ext == ".frag") {
-            kind = GL_FRAGMENT_SHADER;
-        } else {
-            fprintf(stderr, "Cannot parse path %s\n", path.c_str());
-            return 0;
-        }
-
+    GLuint buildShader(GLenum kind, const std::string &name, std::vector<std::string> paths) {
         GLuint shader = glCreateShader(kind);
-        util::shaderFile(shader, path);
+        shaderFiles(shader, paths);
+
         glCompileShader(shader);
 
         GLint comp;
         glGetShaderiv(shader, GL_COMPILE_STATUS, &comp);
         if (!comp) {
-            const std::string log = shaderInfoLog(shader);
-            fprintf(stderr, "SHADER ERROR: %s\n%s", path.c_str(), log.c_str());
+            std::string log = shaderInfoLog(shader);
+            fprintf(stderr, "SHADER ERROR (%s):\n%s", name.c_str(), log.c_str());
             glDeleteShader(shader);
             return 0;
         }
@@ -66,8 +67,38 @@ namespace util {
         return shader;
     }
 
-    GLuint buildProgram(std::initializer_list<GLuint> shaders) {
+    GLuint buildShader(GLenum kind, const std::vector<std::string> &paths) {
+        switch (kind) {
+        case GL_VERTEX_SHADER:
+            return buildShader(kind, "VERTEX", paths);
+        case GL_FRAGMENT_SHADER:
+            return buildShader(kind, "FRAGMENT", paths);
+        default:
+            return buildShader(kind, "?", paths);
+        }
+    }
+
+    GLuint buildShader(const std::string &path) {
+        std::string ext = path.substr(path.rfind('.'));
+        std::string name;
+
+        std::vector<std::string> paths{path};
+
+        if (ext == ".vert") {
+            return buildShader(GL_VERTEX_SHADER, paths);
+        } else if (ext == ".frag") {
+            return buildShader(GL_FRAGMENT_SHADER, paths);
+        } else {
+            fprintf(stderr, "Cannot parse path %s\n", path.c_str());
+            return 0;
+        }
+    }
+
+    GLuint buildProgram(bool separable, std::vector<GLuint> shaders) {
         GLuint program = glCreateProgram();
+
+        if (separable)
+            glProgramParameteri(program, GL_PROGRAM_SEPARABLE, GL_TRUE);
 
         for (GLuint shader : shaders)
             glAttachShader(program, shader);
@@ -77,7 +108,7 @@ namespace util {
         GLint link;
         glGetProgramiv(program, GL_LINK_STATUS, &link);
         if (!link) {
-            const std::string log = programInfoLog(program);
+            std::string log = programInfoLog(program);
             fprintf(stderr, "PROGRAM ERROR:\n%s", log.c_str());
             glDeleteProgram(program);
             return 0;
