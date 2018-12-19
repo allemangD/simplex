@@ -190,10 +190,12 @@ int App::run() {
 
         _time += (_glfw_time - _last_glfw_time) * _rate;
 
+        update();
         display();
 
         _last_time = _time;
         _last_glfw_time = _glfw_time;
+        _frame++;
 
         glfwPollEvents();
     };

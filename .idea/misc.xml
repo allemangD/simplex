@@ -4,7 +4,7 @@
   <component name="CidrRootsConfiguration">
     <sourceRoots>
       <file path="$PROJECT_DIR$/framework" />
-      <file path="$PROJECT_DIR$/glapp" />
+      <file path="$PROJECT_DIR$/simplex" />
     </sourceRoots>
     <libraryRoots>
       <file path="$PROJECT_DIR$/vendor" />

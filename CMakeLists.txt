@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(gl_template)
+project(simplex)
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -15,4 +15,4 @@ option(GLM_TEST_ENABLE OFF)
 add_subdirectory(vendor/glm)
 
 add_subdirectory(framework)
-add_subdirectory(glapp)
+add_subdirectory(simplex)

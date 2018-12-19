@@ -60,6 +60,8 @@ protected:
 
     virtual void display() {}
 
+    virtual void update() {}
+
     virtual void deinit() {}
 
 public:
