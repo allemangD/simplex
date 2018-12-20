@@ -14,5 +14,9 @@ add_subdirectory(vendor/glfw)
 option(GLM_TEST_ENABLE OFF)
 add_subdirectory(vendor/glm)
 
+add_subdirectory(vendor/versor)
+get_property(VSR_INCLUDE_DIR GLOBAL PROPERTY VSR_INCLUDE_DIR)
+target_include_directories(vsr PUBLIC ${VSR_INCLUDE_DIR})
+
 add_subdirectory(framework)
 add_subdirectory(simplex)

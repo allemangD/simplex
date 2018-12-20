@@ -113,7 +113,9 @@ class GLApp : public App {
         glfwGetFramebufferSize(getWindow(), &width, &height);
         float ratio = (float) width / height;
 
-        matrices.model = rotor_yw(getTime() / 5) * rotor_xz(getTime() / 2);
+        matrices.model =
+            rotor(glm::vec4(1,0,0,0), glm::vec4(0,0,1,0), getTime() / 4) *
+            rotor(glm::vec4(0,1,0,0), glm::vec4(0,0,0,1), getTime() / 4);
 
         matrices.view = glm::lookAt(glm::vec3(0, 0, -2), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
         matrices.proj = glm::perspective(1.f, ratio, 0.1f, 10.0f);

@@ -1,80 +1,27 @@
 #ifndef GL_TEMPLATE_ROTOR_H
 #define GL_TEMPLATE_ROTOR_H
 
+#include <glm/vec4.hpp>
 #include <glm/mat4x4.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <vsr/vsr.h>
 
-#include <math.h>
+glm::mat4 rotor(glm::vec4 u, glm::vec4 v, float angle) {
+    using Vec = vsr::euclidean_vector<4, float>;
 
-glm::mat4 rotor_xy(float t) {
-    float c = cos(t);
-    float s = sin(t);
+    auto eu = *((Vec *) (void *) &u);
+    auto ev = *((Vec *) (void *) &v);
 
-    return glm::mat4(
-        +c, s, 0, 0,
-        -s, c, 0, 0,
-        +0, 0, 1, 0,
-        +0, 0, 0, 1
-    );
-}
+    auto biv = (eu ^ ev).unit() * angle;
 
-glm::mat4 rotor_xz(float t) {
-    float c = cos(t);
-    float s = sin(t);
+    Vec col[4] = {
+        Vec(1, 0, 0, 0).rotate(biv),
+        Vec(0, 1, 0, 0).rotate(biv),
+        Vec(0, 0, 1, 0).rotate(biv),
+        Vec(0, 0, 0, 1).rotate(biv)
+    };
 
-    return glm::mat4(
-        +c, 0, s, 0,
-        +0, 1, 0, 0,
-        -s, 0, c, 0,
-        +0, 0, 0, 1
-    );
-}
-
-glm::mat4 rotor_xw(float t) {
-    float c = cos(t);
-    float s = sin(t);
-
-    return glm::mat4(
-        +c, 0, 0, s,
-        +0, 1, 0, 0,
-        +0, 0, 1, 0,
-        -s, 0, 0, c
-    );
-}
-
-glm::mat4 rotor_yz(float t) {
-    float c = cos(t);
-    float s = sin(t);
-
-    return glm::mat4(
-        1, +0, 0, 0,
-        0, +c, s, 0,
-        0, -s, c, 0,
-        0, +0, 0, 1
-    );
-}
-
-glm::mat4 rotor_yw(float t) {
-    float c = cos(t);
-    float s = sin(t);
-
-    return glm::mat4(
-        1, +0, 0, 0,
-        0, +c, 0, s,
-        0, +0, 1, 0,
-        0, -s, 0, c
-    );
-}
-
-glm::mat4 rotor_zw(float t) {
-    float c = cos(t);
-    float s = sin(t);
-
-    return glm::mat4(
-        1, 0, +0, 0,
-        0, 1, +0, 0,
-        0, 0, +c, s,
-        0, 0, -s, c
-    );
+    return glm::make_mat4((float *) col);
 }
 
 #endif //GL_TEMPLATE_ROTOR_H

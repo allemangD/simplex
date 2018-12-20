@@ -7,6 +7,7 @@ target_link_libraries(${PROJECT_NAME}
         glad
         glm
         glfw
+        vsr
         framework)
 
 target_include_directories(${PROJECT_NAME}
