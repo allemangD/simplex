@@ -11,7 +11,9 @@ vec3 hsv2rgb(vec3 c) {
 }
 
 void main() {
-    vec3 hsv = vec3(pos.w/3 + .6, 1, 1);
+    float h = pos.w / 3 + .6;
+    float s = 1;
+    float v = smoothstep(1, -1, pos.z);
 
-    fcolor = vec4(hsv2rgb(hsv), 1);
+    fcolor = vec4(hsv2rgb(vec3(h, s, v)), 1);
 }

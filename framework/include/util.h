@@ -73,6 +73,8 @@ namespace util {
             return buildShader(kind, "VERTEX", paths);
         case GL_FRAGMENT_SHADER:
             return buildShader(kind, "FRAGMENT", paths);
+        case GL_GEOMETRY_SHADER:
+            return buildShader(kind, "GEOMETRY", paths);
         default:
             return buildShader(kind, "?", paths);
         }
@@ -88,6 +90,8 @@ namespace util {
             return buildShader(GL_VERTEX_SHADER, paths);
         } else if (ext == ".frag") {
             return buildShader(GL_FRAGMENT_SHADER, paths);
+        } else if (ext == ".geom") {
+            return buildShader(GL_GEOMETRY_SHADER, paths);
         } else {
             fprintf(stderr, "Cannot parse path %s\n", path.c_str());
             return 0;
