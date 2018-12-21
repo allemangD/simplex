@@ -1,0 +1,50 @@
+#ifndef SIMPLEX_SOLIDS_H
+#define SIMPLEX_SOLIDS_H
+
+#include "mesh.h"
+#include "rotor.h"
+
+static auto T = (float) PI / 2;
+
+Mesh<2> poly(int sides) {
+    Mesh<2> res({}, {});
+
+    auto t = (float) (PI * 2 / sides);
+    float t0 = t / 2;
+    auto r = 1 / cos(t0);
+
+    for (int i = 0; i < sides; i++) {
+        glm::vec2 p = r * glm::vec2(cos(t0 + t * i), sin(t0 + t * i));
+        res.verts.emplace_back(p, 0, 0);
+    }
+
+    for (unsigned i = 0; i < sides - 1; i++) {
+        res.inds.push_back(i);
+        res.inds.push_back(i + 1);
+    }
+
+    return res;
+}
+
+Mesh<3> cube() {
+    glm::vec4 off = glm::vec4(0, 0, 1, 0);
+    Mesh<3> face = fill(poly(4));
+    Mesh<3> pair = (face + off) + (face - off);
+
+    return pair +
+        rot_xz(T) * pair +
+        rot_yz(T) * pair;
+}
+
+Mesh<4> tesseract() {
+    glm::vec4 off = glm::vec4(0, 0, 0, 1);
+    Mesh<4> cell = fill(cube());
+    Mesh<4> pair = (cell + off) + (cell - off);
+
+    return pair +
+        rot_xw(T) * pair +
+        rot_yw(T) * pair +
+        rot_zw(T) * pair;
+}
+
+#endif //SIMPLEX_SOLIDS_H

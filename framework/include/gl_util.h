@@ -1,7 +1,3 @@
-#include <utility>
-
-#include <utility>
-
 #ifndef GL_TEMPLATE_UTIL_H
 #define GL_TEMPLATE_UTIL_H
 

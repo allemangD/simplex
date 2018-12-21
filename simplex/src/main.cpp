@@ -1,20 +1,14 @@
+#include <unordered_map>
+#include <vector>
+
 #include <framework.h>
-#include <util.h>
+#include <gl_util.h>
+#include <vsr/vsr.h>
 
 #include "glmutil.h"
+#include "mesh.h"
 #include "rotor.h"
-
-#include <glm/vec3.hpp>
-#include <glm/vec4.hpp>
-#include <glm/mat4x4.hpp>
-#include <glm/trigonometric.hpp>
-
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
-#include <cstdlib>
-#include <cstdio>
-#include <vector>
+#include "solids.h"
 
 extern "C" {
 __attribute__((dllexport)) DWORD NvOptimusEnablement = 0x00000001;
@@ -28,64 +22,9 @@ struct Matrices {
     glm::mat4 proj;
 };
 
-void push_tetrahedron(std::vector<unsigned> *inds, const std::vector<unsigned> &tetra) {
-    for (int i = 0; i < 4; ++i) {
-        inds->push_back(tetra[i]);
-    }
-}
-
-void push_cube(std::vector<unsigned> *inds, const std::vector<unsigned> &cube) {
-    push_tetrahedron(inds, {cube[0], cube[1], cube[2], cube[4]});
-    push_tetrahedron(inds, {cube[1], cube[4], cube[5], cube[7]});
-    push_tetrahedron(inds, {cube[1], cube[2], cube[3], cube[7]});
-    push_tetrahedron(inds, {cube[2], cube[4], cube[6], cube[7]});
-    push_tetrahedron(inds, {cube[1], cube[2], cube[4], cube[7]});
-}
-
-void push_tesseract(std::vector<unsigned> *inds, const std::vector<unsigned> &tess) {
-    push_cube(inds, {tess[0], tess[1], tess[2], tess[3], tess[4], tess[5], tess[6], tess[7]});
-    push_cube(inds, {tess[8], tess[9], tess[10], tess[11], tess[12], tess[13], tess[14], tess[15]});
-    push_cube(inds, {tess[0], tess[1], tess[2], tess[3], tess[8], tess[9], tess[10], tess[11]});
-    push_cube(inds, {tess[4], tess[5], tess[6], tess[7], tess[12], tess[13], tess[14], tess[15]});
-    push_cube(inds, {tess[0], tess[1], tess[4], tess[5], tess[8], tess[9], tess[12], tess[13]});
-    push_cube(inds, {tess[2], tess[3], tess[6], tess[7], tess[10], tess[11], tess[14], tess[15]});
-    push_cube(inds, {tess[0], tess[2], tess[4], tess[6], tess[8], tess[10], tess[12], tess[14]});
-    push_cube(inds, {tess[1], tess[3], tess[5], tess[7], tess[9], tess[11], tess[13], tess[15]});
-}
-
-void build_tesseract(std::vector<unsigned> *inds, std::vector<glm::vec4> *verts, const glm::vec4 center,
-    const glm::vec4 size) {
-    const glm::vec4 rad = size / 2.f;
-
-    std::vector<glm::vec4> new_verts = {
-        {center.x + size.x, center.y + size.y, center.z + size.z, center.w + size.w},
-        {center.x + size.x, center.y + size.y, center.z + size.z, center.w - size.w},
-        {center.x + size.x, center.y + size.y, center.z - size.z, center.w + size.w},
-        {center.x + size.x, center.y + size.y, center.z - size.z, center.w - size.w},
-        {center.x + size.x, center.y - size.y, center.z + size.z, center.w + size.w},
-        {center.x + size.x, center.y - size.y, center.z + size.z, center.w - size.w},
-        {center.x + size.x, center.y - size.y, center.z - size.z, center.w + size.w},
-        {center.x + size.x, center.y - size.y, center.z - size.z, center.w - size.w},
-        {center.x - size.x, center.y + size.y, center.z + size.z, center.w + size.w},
-        {center.x - size.x, center.y + size.y, center.z + size.z, center.w - size.w},
-        {center.x - size.x, center.y + size.y, center.z - size.z, center.w + size.w},
-        {center.x - size.x, center.y + size.y, center.z - size.z, center.w - size.w},
-        {center.x - size.x, center.y - size.y, center.z + size.z, center.w + size.w},
-        {center.x - size.x, center.y - size.y, center.z + size.z, center.w - size.w},
-        {center.x - size.x, center.y - size.y, center.z - size.z, center.w + size.w},
-        {center.x - size.x, center.y - size.y, center.z - size.z, center.w - size.w},
-    };
-
-    std::vector<unsigned> new_inds;
-    for (int i = 0; i < 16; i++) new_inds.push_back((unsigned) verts->size() + i);
-    for (auto vert: new_verts) verts->push_back(vert);
-
-    push_tesseract(inds, new_inds);
-}
-
 class GLApp : public App {
-    std::vector<glm::vec4> cell_verts{};
-    std::vector<unsigned> cell_elems{};
+    Mesh<4> mesh = Mesh<4>({}, {});
+
     Matrices matrices{};
 
     GLuint cell_array{};
@@ -100,68 +39,9 @@ class GLApp : public App {
     bool DRAW_WIRE = true;
 
     void init() override {
-        const bool CUBE = false;
-        const bool TESS = true;
+        mesh = tesseract();
 
-        //region tesseract frame
-        if (TESS) {
-            build_tesseract(&cell_elems, &cell_verts, {-0.875, -0.875, -0.875, +0.00}, {0.125, 0.125, 0.125, 1.000});
-            build_tesseract(&cell_elems, &cell_verts, {-0.875, -0.875, +0.875, +0.00}, {0.125, 0.125, 0.125, 1.000});
-            build_tesseract(&cell_elems, &cell_verts, {-0.875, +0.875, -0.875, +0.00}, {0.125, 0.125, 0.125, 1.000});
-            build_tesseract(&cell_elems, &cell_verts, {-0.875, +0.875, +0.875, +0.00}, {0.125, 0.125, 0.125, 1.000});
-            build_tesseract(&cell_elems, &cell_verts, {+0.875, -0.875, -0.875, +0.00}, {0.125, 0.125, 0.125, 1.000});
-            build_tesseract(&cell_elems, &cell_verts, {+0.875, -0.875, +0.875, +0.00}, {0.125, 0.125, 0.125, 1.000});
-            build_tesseract(&cell_elems, &cell_verts, {+0.875, +0.875, -0.875, +0.00}, {0.125, 0.125, 0.125, 1.000});
-            build_tesseract(&cell_elems, &cell_verts, {+0.875, +0.875, +0.875, +0.00}, {0.125, 0.125, 0.125, 1.000});
-
-            build_tesseract(&cell_elems, &cell_verts, {-0.875, -0.875, +0.00, -0.875}, {0.125, 0.125, 0.750, 0.125});
-            build_tesseract(&cell_elems, &cell_verts, {-0.875, -0.875, +0.00, +0.875}, {0.125, 0.125, 0.750, 0.125});
-            build_tesseract(&cell_elems, &cell_verts, {-0.875, +0.875, +0.00, -0.875}, {0.125, 0.125, 0.750, 0.125});
-            build_tesseract(&cell_elems, &cell_verts, {-0.875, +0.875, +0.00, +0.875}, {0.125, 0.125, 0.750, 0.125});
-            build_tesseract(&cell_elems, &cell_verts, {+0.875, -0.875, +0.00, -0.875}, {0.125, 0.125, 0.750, 0.125});
-            build_tesseract(&cell_elems, &cell_verts, {+0.875, -0.875, +0.00, +0.875}, {0.125, 0.125, 0.750, 0.125});
-            build_tesseract(&cell_elems, &cell_verts, {+0.875, +0.875, +0.00, -0.875}, {0.125, 0.125, 0.750, 0.125});
-            build_tesseract(&cell_elems, &cell_verts, {+0.875, +0.875, +0.00, +0.875}, {0.125, 0.125, 0.750, 0.125});
-
-            build_tesseract(&cell_elems, &cell_verts, {-0.875, +0.00, -0.875, -0.875}, {0.125, 0.750, 0.125, 0.125});
-            build_tesseract(&cell_elems, &cell_verts, {-0.875, +0.00, -0.875, +0.875}, {0.125, 0.750, 0.125, 0.125});
-            build_tesseract(&cell_elems, &cell_verts, {-0.875, +0.00, +0.875, -0.875}, {0.125, 0.750, 0.125, 0.125});
-            build_tesseract(&cell_elems, &cell_verts, {-0.875, +0.00, +0.875, +0.875}, {0.125, 0.750, 0.125, 0.125});
-            build_tesseract(&cell_elems, &cell_verts, {+0.875, +0.00, -0.875, -0.875}, {0.125, 0.750, 0.125, 0.125});
-            build_tesseract(&cell_elems, &cell_verts, {+0.875, +0.00, -0.875, +0.875}, {0.125, 0.750, 0.125, 0.125});
-            build_tesseract(&cell_elems, &cell_verts, {+0.875, +0.00, +0.875, -0.875}, {0.125, 0.750, 0.125, 0.125});
-            build_tesseract(&cell_elems, &cell_verts, {+0.875, +0.00, +0.875, +0.875}, {0.125, 0.750, 0.125, 0.125});
-
-            build_tesseract(&cell_elems, &cell_verts, {+0.00, -0.875, -0.875, -0.875}, {0.750, 0.125, 0.125, 0.125});
-            build_tesseract(&cell_elems, &cell_verts, {+0.00, -0.875, -0.875, +0.875}, {0.750, 0.125, 0.125, 0.125});
-            build_tesseract(&cell_elems, &cell_verts, {+0.00, -0.875, +0.875, -0.875}, {0.750, 0.125, 0.125, 0.125});
-            build_tesseract(&cell_elems, &cell_verts, {+0.00, -0.875, +0.875, +0.875}, {0.750, 0.125, 0.125, 0.125});
-            build_tesseract(&cell_elems, &cell_verts, {+0.00, +0.875, -0.875, -0.875}, {0.750, 0.125, 0.125, 0.125});
-            build_tesseract(&cell_elems, &cell_verts, {+0.00, +0.875, -0.875, +0.875}, {0.750, 0.125, 0.125, 0.125});
-            build_tesseract(&cell_elems, &cell_verts, {+0.00, +0.875, +0.875, -0.875}, {0.750, 0.125, 0.125, 0.125});
-            build_tesseract(&cell_elems, &cell_verts, {+0.00, +0.875, +0.875, +0.875}, {0.750, 0.125, 0.125, 0.125});
-        }
-        //endregion
-
-        //region cube frame
-        if (CUBE) {
-            build_tesseract(&cell_elems, &cell_verts, {-0.875, -0.875, +0.00, +0.00}, {0.125, 0.125, 1.000, 0.125});
-            build_tesseract(&cell_elems, &cell_verts, {-0.875, +0.875, +0.00, +0.00}, {0.125, 0.125, 1.000, 0.125});
-            build_tesseract(&cell_elems, &cell_verts, {+0.875, -0.875, +0.00, +0.00}, {0.125, 0.125, 1.000, 0.125});
-            build_tesseract(&cell_elems, &cell_verts, {+0.875, +0.875, +0.00, +0.00}, {0.125, 0.125, 1.000, 0.125});
-
-            build_tesseract(&cell_elems, &cell_verts, {-0.875, +0.00, -0.875, +0.00}, {0.125, 0.750, 0.125, 0.125});
-            build_tesseract(&cell_elems, &cell_verts, {-0.875, +0.00, +0.875, +0.00}, {0.125, 0.750, 0.125, 0.125});
-            build_tesseract(&cell_elems, &cell_verts, {+0.875, +0.00, -0.875, +0.00}, {0.125, 0.750, 0.125, 0.125});
-            build_tesseract(&cell_elems, &cell_verts, {+0.875, +0.00, +0.875, +0.00}, {0.125, 0.750, 0.125, 0.125});
-
-            build_tesseract(&cell_elems, &cell_verts, {+0.00, -0.875, -0.875, +0.00}, {0.750, 0.125, 0.125, 0.125});
-            build_tesseract(&cell_elems, &cell_verts, {+0.00, -0.875, +0.875, +0.00}, {0.750, 0.125, 0.125, 0.125});
-            build_tesseract(&cell_elems, &cell_verts, {+0.00, +0.875, -0.875, +0.00}, {0.750, 0.125, 0.125, 0.125});
-            build_tesseract(&cell_elems, &cell_verts, {+0.00, +0.875, +0.875, +0.00}, {0.750, 0.125, 0.125, 0.125});
-        }
-        //endregion
-
+        //region Uniforms
         matrices = {
             glm::identity<glm::mat4>(),
             glm::vec4(0),
@@ -169,6 +49,7 @@ class GLApp : public App {
             glm::identity<glm::mat4>(),
             glm::identity<glm::mat4>(),
         };
+        //endregion
 
         //region Shaders
         GLuint main_vs = util::buildShader(GL_VERTEX_SHADER, {"shaders/main.vert"});
@@ -191,12 +72,12 @@ class GLApp : public App {
         glGenBuffers(1, &cell_vert_buf);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, verts_binding_point, cell_vert_buf);
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, cell_vert_buf);
-        util::bufferData(GL_SHADER_STORAGE_BUFFER, cell_verts, GL_STATIC_DRAW);
+        util::bufferData(GL_SHADER_STORAGE_BUFFER, mesh.verts, GL_STATIC_DRAW);
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
         glGenBuffers(1, &cell_elem_arr_buf);
         glBindBuffer(GL_ARRAY_BUFFER, cell_elem_arr_buf);
-        util::bufferData(GL_ARRAY_BUFFER, cell_elems, GL_STATIC_DRAW);
+        util::bufferData(GL_ARRAY_BUFFER, mesh.inds, GL_STATIC_DRAW);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
 
         glGenBuffers(1, &matrix_buffer);
@@ -226,16 +107,14 @@ class GLApp : public App {
         float ratio = (float) width / height;
 
         matrices.model = glm::identity<glm::mat4>() *
-//            rotor(glm::vec4(1, 0, 0, 0), glm::vec4(0, 1, 0, 0), getTime() / 5) *
+            rotor(glm::vec4(1, 0, 0, 0), glm::vec4(0, 0, 0, 1), getTime() / 3) *
+            rotor(glm::vec4(0, 1, 0, 0), glm::vec4(0, 0, 1, 0), getTime() / 3) *
 
-//            rotor(glm::vec4(1, 1, 1, 0), glm::vec4(0, 0, 0, 1), 1) *
-//            rotor(glm::vec4(1, 0, 0, 0), glm::vec4(0, 0, 0, 1), 1) *
-
-            rotor(glm::vec4(1, 1, 1, 0), glm::vec4(0, 0, 0, 1), getTime() / 4) *
-            rotor(glm::vec4(1, 0, 0, 0), glm::vec4(0, 0, 0, 1), getTime() / 5) *
+//            rotor(glm::vec4(1, 1, 1, 0), glm::vec4(0, 0, 0, 1), getTime() / 3) *
+//            rotor(glm::vec4(1, 0, 0, 0), glm::vec4(0, 0, 1, 0), getTime() / 3) *
             1.f;
 
-//        matrices.offset.w = sin(getTime() / 3) * 1.8f;
+//        matrices.offset = glm::vec4(0,0,0,sin(getTime() / 2));
 
         matrices.view = glm::lookAt(glm::vec3(0, 0, -4), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
         matrices.proj = glm::perspective(1.f, ratio, 0.1f, 20.0f);
@@ -260,11 +139,12 @@ class GLApp : public App {
         glBindVertexArray(cell_array);
 
         glUseProgram(sect_prog);
-        glDrawArrays(GL_POINTS, 0, (GLsizei) cell_elems.size() / 4);
+        glDrawArrays(GL_POINTS, 0, mesh.size());
 
         if (DRAW_WIRE) {
+            glClear(GL_DEPTH_BUFFER_BIT);
             glUseProgram(wire_prog);
-            glDrawArrays(GL_POINTS, 0, (GLsizei) cell_elems.size() / 4);
+            glDrawArrays(GL_POINTS, 0, mesh.size());
         }
 
         glBindVertexArray(0);

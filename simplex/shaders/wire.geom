@@ -1,7 +1,7 @@
 #version 440 core
 
 layout(points) in;
-layout(line_strip, max_vertices=48) out;
+layout(line_strip, max_vertices=20) out;
 
 layout(std430, binding=1) buffer Positions {
     vec4 verts[];
