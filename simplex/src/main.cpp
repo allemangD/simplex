@@ -22,7 +22,7 @@ struct Matrices {
     glm::mat4 proj;
 };
 
-void push_tetrahedron(std::vector<unsigned> *inds, const std::vector<unsigned> & tetra) {
+void push_tetrahedron(std::vector<unsigned> *inds, const std::vector<unsigned> &tetra) {
     for (int i = 0; i < 4; ++i) {
         inds->push_back(tetra[i]);
     }
@@ -47,6 +47,36 @@ void push_tesseract(std::vector<unsigned> *inds, const std::vector<unsigned> &te
     push_cube(inds, {tess[1], tess[3], tess[5], tess[7], tess[9], tess[11], tess[13], tess[15]});
 }
 
+void build_tesseract(std::vector<unsigned> *inds, std::vector<glm::vec4> *verts, const glm::vec4 center,
+    const glm::vec4 size) {
+    const glm::vec4 rad = size / 2.f;
+
+    std::vector<glm::vec4> new_verts = {
+        {center.x + size.x, center.y + size.y, center.z + size.z, center.w + size.w},
+        {center.x + size.x, center.y + size.y, center.z + size.z, center.w - size.w},
+        {center.x + size.x, center.y + size.y, center.z - size.z, center.w + size.w},
+        {center.x + size.x, center.y + size.y, center.z - size.z, center.w - size.w},
+        {center.x + size.x, center.y - size.y, center.z + size.z, center.w + size.w},
+        {center.x + size.x, center.y - size.y, center.z + size.z, center.w - size.w},
+        {center.x + size.x, center.y - size.y, center.z - size.z, center.w + size.w},
+        {center.x + size.x, center.y - size.y, center.z - size.z, center.w - size.w},
+        {center.x - size.x, center.y + size.y, center.z + size.z, center.w + size.w},
+        {center.x - size.x, center.y + size.y, center.z + size.z, center.w - size.w},
+        {center.x - size.x, center.y + size.y, center.z - size.z, center.w + size.w},
+        {center.x - size.x, center.y + size.y, center.z - size.z, center.w - size.w},
+        {center.x - size.x, center.y - size.y, center.z + size.z, center.w + size.w},
+        {center.x - size.x, center.y - size.y, center.z + size.z, center.w - size.w},
+        {center.x - size.x, center.y - size.y, center.z - size.z, center.w + size.w},
+        {center.x - size.x, center.y - size.y, center.z - size.z, center.w - size.w},
+    };
+
+    std::vector<unsigned> new_inds;
+    for (int i = 0; i < 16; i++) new_inds.push_back((unsigned) verts->size() + i);
+    for (auto vert: new_verts) verts->push_back(vert);
+
+    push_tesseract(inds, new_inds);
+}
+
 class GLApp : public App {
     std::vector<glm::vec4> cell_verts{};
     std::vector<unsigned> cell_elems{};
@@ -61,28 +91,44 @@ class GLApp : public App {
 
     GLuint wire_prog{}, sect_prog{};
 
-    void init() override {
-        cell_verts = {
-            glm::vec4(+1, +1, +1, +1) / 2.f,
-            glm::vec4(+1, +1, +1, -1) / 2.f,
-            glm::vec4(+1, +1, -1, +1) / 2.f,
-            glm::vec4(+1, +1, -1, -1) / 2.f,
-            glm::vec4(+1, -1, +1, +1) / 2.f,
-            glm::vec4(+1, -1, +1, -1) / 2.f,
-            glm::vec4(+1, -1, -1, +1) / 2.f,
-            glm::vec4(+1, -1, -1, -1) / 2.f,
-            glm::vec4(-1, +1, +1, +1) / 2.f,
-            glm::vec4(-1, +1, +1, -1) / 2.f,
-            glm::vec4(-1, +1, -1, +1) / 2.f,
-            glm::vec4(-1, +1, -1, -1) / 2.f,
-            glm::vec4(-1, -1, +1, +1) / 2.f,
-            glm::vec4(-1, -1, +1, -1) / 2.f,
-            glm::vec4(-1, -1, -1, +1) / 2.f,
-            glm::vec4(-1, -1, -1, -1) / 2.f,
-        };
+    bool DRAW_WIRE = true;
 
-        cell_elems = {};
-        push_tesseract(&cell_elems, {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15});
+    void init() override {
+        build_tesseract(&cell_elems, &cell_verts, {-1, -1, -1, +0}, {0.125, 0.125, 0.125, 1.125});
+        build_tesseract(&cell_elems, &cell_verts, {-1, -1, +1, +0}, {0.125, 0.125, 0.125, 1.125});
+        build_tesseract(&cell_elems, &cell_verts, {-1, +1, -1, +0}, {0.125, 0.125, 0.125, 1.125});
+        build_tesseract(&cell_elems, &cell_verts, {-1, +1, +1, +0}, {0.125, 0.125, 0.125, 1.125});
+        build_tesseract(&cell_elems, &cell_verts, {+1, -1, -1, +0}, {0.125, 0.125, 0.125, 1.125});
+        build_tesseract(&cell_elems, &cell_verts, {+1, -1, +1, +0}, {0.125, 0.125, 0.125, 1.125});
+        build_tesseract(&cell_elems, &cell_verts, {+1, +1, -1, +0}, {0.125, 0.125, 0.125, 1.125});
+        build_tesseract(&cell_elems, &cell_verts, {+1, +1, +1, +0}, {0.125, 0.125, 0.125, 1.125});
+
+        build_tesseract(&cell_elems, &cell_verts, {-1, -1, +0, -1}, {0.125, 0.125, 0.875, 0.125});
+        build_tesseract(&cell_elems, &cell_verts, {-1, -1, +0, +1}, {0.125, 0.125, 0.875, 0.125});
+        build_tesseract(&cell_elems, &cell_verts, {-1, +1, +0, -1}, {0.125, 0.125, 0.875, 0.125});
+        build_tesseract(&cell_elems, &cell_verts, {-1, +1, +0, +1}, {0.125, 0.125, 0.875, 0.125});
+        build_tesseract(&cell_elems, &cell_verts, {+1, -1, +0, -1}, {0.125, 0.125, 0.875, 0.125});
+        build_tesseract(&cell_elems, &cell_verts, {+1, -1, +0, +1}, {0.125, 0.125, 0.875, 0.125});
+        build_tesseract(&cell_elems, &cell_verts, {+1, +1, +0, -1}, {0.125, 0.125, 0.875, 0.125});
+        build_tesseract(&cell_elems, &cell_verts, {+1, +1, +0, +1}, {0.125, 0.125, 0.875, 0.125});
+
+        build_tesseract(&cell_elems, &cell_verts, {-1, +0, -1, -1}, {0.125, 0.875, 0.125, 0.125});
+        build_tesseract(&cell_elems, &cell_verts, {-1, +0, -1, +1}, {0.125, 0.875, 0.125, 0.125});
+        build_tesseract(&cell_elems, &cell_verts, {-1, +0, +1, -1}, {0.125, 0.875, 0.125, 0.125});
+        build_tesseract(&cell_elems, &cell_verts, {-1, +0, +1, +1}, {0.125, 0.875, 0.125, 0.125});
+        build_tesseract(&cell_elems, &cell_verts, {+1, +0, -1, -1}, {0.125, 0.875, 0.125, 0.125});
+        build_tesseract(&cell_elems, &cell_verts, {+1, +0, -1, +1}, {0.125, 0.875, 0.125, 0.125});
+        build_tesseract(&cell_elems, &cell_verts, {+1, +0, +1, -1}, {0.125, 0.875, 0.125, 0.125});
+        build_tesseract(&cell_elems, &cell_verts, {+1, +0, +1, +1}, {0.125, 0.875, 0.125, 0.125});
+
+        build_tesseract(&cell_elems, &cell_verts, {+0, -1, -1, -1}, {0.875, 0.125, 0.125, 0.125});
+        build_tesseract(&cell_elems, &cell_verts, {+0, -1, -1, +1}, {0.875, 0.125, 0.125, 0.125});
+        build_tesseract(&cell_elems, &cell_verts, {+0, -1, +1, -1}, {0.875, 0.125, 0.125, 0.125});
+        build_tesseract(&cell_elems, &cell_verts, {+0, -1, +1, +1}, {0.875, 0.125, 0.125, 0.125});
+        build_tesseract(&cell_elems, &cell_verts, {+0, +1, -1, -1}, {0.875, 0.125, 0.125, 0.125});
+        build_tesseract(&cell_elems, &cell_verts, {+0, +1, -1, +1}, {0.875, 0.125, 0.125, 0.125});
+        build_tesseract(&cell_elems, &cell_verts, {+0, +1, +1, -1}, {0.875, 0.125, 0.125, 0.125});
+        build_tesseract(&cell_elems, &cell_verts, {+0, +1, +1, +1}, {0.875, 0.125, 0.125, 0.125});
 
         matrices = {
             glm::identity<glm::mat4>(),
@@ -149,8 +195,8 @@ class GLApp : public App {
             rotor(glm::vec4(0, 1, 0, 0), glm::vec4(0, 0, 1, 0), getTime() / 4) *
                 rotor(glm::vec4(1, 1, 1, 0), glm::vec4(0, 0, 0, 1), getTime() / 5);
 
-        matrices.view = glm::lookAt(glm::vec3(0, 0, -2), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
-        matrices.proj = glm::perspective(1.f, ratio, 0.1f, 10.0f);
+        matrices.view = glm::lookAt(glm::vec3(0, 0, -4), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+        matrices.proj = glm::perspective(1.f, ratio, 0.1f, 20.0f);
 
         glBindBuffer(GL_UNIFORM_BUFFER, matrix_buffer);
         glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(Matrices), &matrices);
@@ -171,15 +217,13 @@ class GLApp : public App {
 
         glBindVertexArray(cell_array);
 
-        glUseProgram(wire_prog);
-        glDrawArrays(GL_POINTS, 0, (GLsizei) cell_elems.size() / 4);
-
-        glClear(GL_DEPTH_BUFFER_BIT);
         glUseProgram(sect_prog);
         glDrawArrays(GL_POINTS, 0, (GLsizei) cell_elems.size() / 4);
 
-        glUseProgram(wire_prog);
-        glDrawArrays(GL_POINTS, 0, (GLsizei) cell_elems.size() / 4);
+        if (DRAW_WIRE) {
+            glUseProgram(wire_prog);
+            glDrawArrays(GL_POINTS, 0, (GLsizei) cell_elems.size() / 4);
+        }
 
         glBindVertexArray(0);
 
@@ -190,6 +234,10 @@ class GLApp : public App {
     void onKey(int key, int scan_code, int action, int mods) override {
         if (action == GLFW_PRESS && key == GLFW_KEY_ESCAPE) {
             glfwSetWindowShouldClose(getWindow(), true);
+        }
+
+        if (action == GLFW_PRESS && key == GLFW_KEY_SPACE) {
+            DRAW_WIRE = !DRAW_WIRE;
         }
     }
 

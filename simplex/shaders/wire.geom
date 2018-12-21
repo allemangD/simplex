@@ -19,7 +19,7 @@ out vec4 pos;
 
 void emit(vec4 v) {
     pos = v;
-    gl_Position = proj * view * vec4(v.xyz, -v.w + 2);
+    gl_Position = proj * view * vec4(v.xyz, -v.w + 3);
     EmitVertex();
 }
 
