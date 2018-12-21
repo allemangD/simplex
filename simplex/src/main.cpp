@@ -39,7 +39,7 @@ class GLApp : public App {
     bool DRAW_WIRE = true;
 
     void init() override {
-        mesh = tesseract_frame(.125f);
+        mesh = tesseract_cell_frame(.125f);
 
         //region Uniforms
         matrices = {
@@ -114,7 +114,7 @@ class GLApp : public App {
             rotor(glm::vec4(1, 0, 0, 0), glm::vec4(0, 0, 1, 0), getTime() / 3) *
             1.f;
 
-//        matrices.offset = glm::vec4(0,0,0,sin(getTime() / 2));
+        matrices.offset = glm::vec4(0,0,0,sin(getTime() / 2) * 0.9f);
 
         matrices.view = glm::lookAt(glm::vec3(0, 0, -4), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
         matrices.proj = glm::perspective(1.f, ratio, 0.1f, 20.0f);
