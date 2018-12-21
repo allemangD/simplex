@@ -22,18 +22,29 @@ struct Matrices {
     glm::mat4 proj;
 };
 
-void push_cube(std::vector<unsigned> &inds, std::vector<unsigned> cube) {
-    std::vector<unsigned> cube_inds = {
-        cube[0], cube[1], cube[2], cube[4],
-        cube[1], cube[4], cube[5], cube[7],
-        cube[1], cube[2], cube[3], cube[7],
-        cube[2], cube[4], cube[6], cube[7],
-        cube[1], cube[2], cube[4], cube[7],
-    };
-
-    for (auto ind : cube_inds) {
-        inds.push_back(ind);
+void push_tetrahedron(std::vector<unsigned> *inds, const std::vector<unsigned> & tetra) {
+    for (int i = 0; i < 4; ++i) {
+        inds->push_back(tetra[i]);
     }
+}
+
+void push_cube(std::vector<unsigned> *inds, const std::vector<unsigned> &cube) {
+    push_tetrahedron(inds, {cube[0], cube[1], cube[2], cube[4]});
+    push_tetrahedron(inds, {cube[1], cube[4], cube[5], cube[7]});
+    push_tetrahedron(inds, {cube[1], cube[2], cube[3], cube[7]});
+    push_tetrahedron(inds, {cube[2], cube[4], cube[6], cube[7]});
+    push_tetrahedron(inds, {cube[1], cube[2], cube[4], cube[7]});
+}
+
+void push_tesseract(std::vector<unsigned> *inds, const std::vector<unsigned> &tess) {
+    push_cube(inds, {tess[0], tess[1], tess[2], tess[3], tess[4], tess[5], tess[6], tess[7]});
+    push_cube(inds, {tess[8], tess[9], tess[10], tess[11], tess[12], tess[13], tess[14], tess[15]});
+    push_cube(inds, {tess[0], tess[1], tess[2], tess[3], tess[8], tess[9], tess[10], tess[11]});
+    push_cube(inds, {tess[4], tess[5], tess[6], tess[7], tess[12], tess[13], tess[14], tess[15]});
+    push_cube(inds, {tess[0], tess[1], tess[4], tess[5], tess[8], tess[9], tess[12], tess[13]});
+    push_cube(inds, {tess[2], tess[3], tess[6], tess[7], tess[10], tess[11], tess[14], tess[15]});
+    push_cube(inds, {tess[0], tess[2], tess[4], tess[6], tess[8], tess[10], tess[12], tess[14]});
+    push_cube(inds, {tess[1], tess[3], tess[5], tess[7], tess[9], tess[11], tess[13], tess[15]});
 }
 
 class GLApp : public App {
@@ -71,14 +82,7 @@ class GLApp : public App {
         };
 
         cell_elems = {};
-        push_cube(cell_elems, {0, 1, 2, 3, 4, 5, 6, 7});
-        push_cube(cell_elems, {8, 9, 10, 11, 12, 13, 14, 15});
-        push_cube(cell_elems, {0, 1, 2, 3, 8, 9, 10, 11});
-        push_cube(cell_elems, {4, 5, 6, 7, 12, 13, 14, 15});
-        push_cube(cell_elems, {0, 1, 4, 5, 8, 9, 12, 13});
-        push_cube(cell_elems, {2, 3, 6, 7, 10, 11, 14, 15});
-        push_cube(cell_elems, {0, 2, 4, 6, 8, 10, 12, 14});
-        push_cube(cell_elems, {1, 3, 5, 7, 9, 11, 13, 15});
+        push_tesseract(&cell_elems, {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15});
 
         matrices = {
             glm::identity<glm::mat4>(),
