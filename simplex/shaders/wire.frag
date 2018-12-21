@@ -15,5 +15,7 @@ void main() {
     float s = 1;
     float v = smoothstep(3, -3, pos.z) / 2;
 
-    fcolor = vec4(hsv2rgb(vec3(h, s, v)), 1);
+    vec3 hsv = vec3(h, s, v);
+
+    fcolor = vec4(hsv2rgb(hsv), 1);
 }

@@ -16,8 +16,14 @@
 #include <cstdio>
 #include <vector>
 
+extern "C" {
+__attribute__((dllexport)) DWORD NvOptimusEnablement = 0x00000001;
+}
+
 struct Matrices {
     glm::mat4 model;
+    glm::vec4 offset;
+
     glm::mat4 view;
     glm::mat4 proj;
 };
@@ -94,44 +100,72 @@ class GLApp : public App {
     bool DRAW_WIRE = true;
 
     void init() override {
-        build_tesseract(&cell_elems, &cell_verts, {-1, -1, -1, +0}, {0.125, 0.125, 0.125, 1.125});
-        build_tesseract(&cell_elems, &cell_verts, {-1, -1, +1, +0}, {0.125, 0.125, 0.125, 1.125});
-        build_tesseract(&cell_elems, &cell_verts, {-1, +1, -1, +0}, {0.125, 0.125, 0.125, 1.125});
-        build_tesseract(&cell_elems, &cell_verts, {-1, +1, +1, +0}, {0.125, 0.125, 0.125, 1.125});
-        build_tesseract(&cell_elems, &cell_verts, {+1, -1, -1, +0}, {0.125, 0.125, 0.125, 1.125});
-        build_tesseract(&cell_elems, &cell_verts, {+1, -1, +1, +0}, {0.125, 0.125, 0.125, 1.125});
-        build_tesseract(&cell_elems, &cell_verts, {+1, +1, -1, +0}, {0.125, 0.125, 0.125, 1.125});
-        build_tesseract(&cell_elems, &cell_verts, {+1, +1, +1, +0}, {0.125, 0.125, 0.125, 1.125});
+        const bool CUBE = false;
+        const bool TESS = true;
 
-        build_tesseract(&cell_elems, &cell_verts, {-1, -1, +0, -1}, {0.125, 0.125, 0.875, 0.125});
-        build_tesseract(&cell_elems, &cell_verts, {-1, -1, +0, +1}, {0.125, 0.125, 0.875, 0.125});
-        build_tesseract(&cell_elems, &cell_verts, {-1, +1, +0, -1}, {0.125, 0.125, 0.875, 0.125});
-        build_tesseract(&cell_elems, &cell_verts, {-1, +1, +0, +1}, {0.125, 0.125, 0.875, 0.125});
-        build_tesseract(&cell_elems, &cell_verts, {+1, -1, +0, -1}, {0.125, 0.125, 0.875, 0.125});
-        build_tesseract(&cell_elems, &cell_verts, {+1, -1, +0, +1}, {0.125, 0.125, 0.875, 0.125});
-        build_tesseract(&cell_elems, &cell_verts, {+1, +1, +0, -1}, {0.125, 0.125, 0.875, 0.125});
-        build_tesseract(&cell_elems, &cell_verts, {+1, +1, +0, +1}, {0.125, 0.125, 0.875, 0.125});
+        //region tesseract frame
+        if (TESS) {
+            build_tesseract(&cell_elems, &cell_verts, {-0.875, -0.875, -0.875, +0.00}, {0.125, 0.125, 0.125, 1.000});
+            build_tesseract(&cell_elems, &cell_verts, {-0.875, -0.875, +0.875, +0.00}, {0.125, 0.125, 0.125, 1.000});
+            build_tesseract(&cell_elems, &cell_verts, {-0.875, +0.875, -0.875, +0.00}, {0.125, 0.125, 0.125, 1.000});
+            build_tesseract(&cell_elems, &cell_verts, {-0.875, +0.875, +0.875, +0.00}, {0.125, 0.125, 0.125, 1.000});
+            build_tesseract(&cell_elems, &cell_verts, {+0.875, -0.875, -0.875, +0.00}, {0.125, 0.125, 0.125, 1.000});
+            build_tesseract(&cell_elems, &cell_verts, {+0.875, -0.875, +0.875, +0.00}, {0.125, 0.125, 0.125, 1.000});
+            build_tesseract(&cell_elems, &cell_verts, {+0.875, +0.875, -0.875, +0.00}, {0.125, 0.125, 0.125, 1.000});
+            build_tesseract(&cell_elems, &cell_verts, {+0.875, +0.875, +0.875, +0.00}, {0.125, 0.125, 0.125, 1.000});
 
-        build_tesseract(&cell_elems, &cell_verts, {-1, +0, -1, -1}, {0.125, 0.875, 0.125, 0.125});
-        build_tesseract(&cell_elems, &cell_verts, {-1, +0, -1, +1}, {0.125, 0.875, 0.125, 0.125});
-        build_tesseract(&cell_elems, &cell_verts, {-1, +0, +1, -1}, {0.125, 0.875, 0.125, 0.125});
-        build_tesseract(&cell_elems, &cell_verts, {-1, +0, +1, +1}, {0.125, 0.875, 0.125, 0.125});
-        build_tesseract(&cell_elems, &cell_verts, {+1, +0, -1, -1}, {0.125, 0.875, 0.125, 0.125});
-        build_tesseract(&cell_elems, &cell_verts, {+1, +0, -1, +1}, {0.125, 0.875, 0.125, 0.125});
-        build_tesseract(&cell_elems, &cell_verts, {+1, +0, +1, -1}, {0.125, 0.875, 0.125, 0.125});
-        build_tesseract(&cell_elems, &cell_verts, {+1, +0, +1, +1}, {0.125, 0.875, 0.125, 0.125});
+            build_tesseract(&cell_elems, &cell_verts, {-0.875, -0.875, +0.00, -0.875}, {0.125, 0.125, 0.750, 0.125});
+            build_tesseract(&cell_elems, &cell_verts, {-0.875, -0.875, +0.00, +0.875}, {0.125, 0.125, 0.750, 0.125});
+            build_tesseract(&cell_elems, &cell_verts, {-0.875, +0.875, +0.00, -0.875}, {0.125, 0.125, 0.750, 0.125});
+            build_tesseract(&cell_elems, &cell_verts, {-0.875, +0.875, +0.00, +0.875}, {0.125, 0.125, 0.750, 0.125});
+            build_tesseract(&cell_elems, &cell_verts, {+0.875, -0.875, +0.00, -0.875}, {0.125, 0.125, 0.750, 0.125});
+            build_tesseract(&cell_elems, &cell_verts, {+0.875, -0.875, +0.00, +0.875}, {0.125, 0.125, 0.750, 0.125});
+            build_tesseract(&cell_elems, &cell_verts, {+0.875, +0.875, +0.00, -0.875}, {0.125, 0.125, 0.750, 0.125});
+            build_tesseract(&cell_elems, &cell_verts, {+0.875, +0.875, +0.00, +0.875}, {0.125, 0.125, 0.750, 0.125});
 
-        build_tesseract(&cell_elems, &cell_verts, {+0, -1, -1, -1}, {0.875, 0.125, 0.125, 0.125});
-        build_tesseract(&cell_elems, &cell_verts, {+0, -1, -1, +1}, {0.875, 0.125, 0.125, 0.125});
-        build_tesseract(&cell_elems, &cell_verts, {+0, -1, +1, -1}, {0.875, 0.125, 0.125, 0.125});
-        build_tesseract(&cell_elems, &cell_verts, {+0, -1, +1, +1}, {0.875, 0.125, 0.125, 0.125});
-        build_tesseract(&cell_elems, &cell_verts, {+0, +1, -1, -1}, {0.875, 0.125, 0.125, 0.125});
-        build_tesseract(&cell_elems, &cell_verts, {+0, +1, -1, +1}, {0.875, 0.125, 0.125, 0.125});
-        build_tesseract(&cell_elems, &cell_verts, {+0, +1, +1, -1}, {0.875, 0.125, 0.125, 0.125});
-        build_tesseract(&cell_elems, &cell_verts, {+0, +1, +1, +1}, {0.875, 0.125, 0.125, 0.125});
+            build_tesseract(&cell_elems, &cell_verts, {-0.875, +0.00, -0.875, -0.875}, {0.125, 0.750, 0.125, 0.125});
+            build_tesseract(&cell_elems, &cell_verts, {-0.875, +0.00, -0.875, +0.875}, {0.125, 0.750, 0.125, 0.125});
+            build_tesseract(&cell_elems, &cell_verts, {-0.875, +0.00, +0.875, -0.875}, {0.125, 0.750, 0.125, 0.125});
+            build_tesseract(&cell_elems, &cell_verts, {-0.875, +0.00, +0.875, +0.875}, {0.125, 0.750, 0.125, 0.125});
+            build_tesseract(&cell_elems, &cell_verts, {+0.875, +0.00, -0.875, -0.875}, {0.125, 0.750, 0.125, 0.125});
+            build_tesseract(&cell_elems, &cell_verts, {+0.875, +0.00, -0.875, +0.875}, {0.125, 0.750, 0.125, 0.125});
+            build_tesseract(&cell_elems, &cell_verts, {+0.875, +0.00, +0.875, -0.875}, {0.125, 0.750, 0.125, 0.125});
+            build_tesseract(&cell_elems, &cell_verts, {+0.875, +0.00, +0.875, +0.875}, {0.125, 0.750, 0.125, 0.125});
+
+            build_tesseract(&cell_elems, &cell_verts, {+0.00, -0.875, -0.875, -0.875}, {0.750, 0.125, 0.125, 0.125});
+            build_tesseract(&cell_elems, &cell_verts, {+0.00, -0.875, -0.875, +0.875}, {0.750, 0.125, 0.125, 0.125});
+            build_tesseract(&cell_elems, &cell_verts, {+0.00, -0.875, +0.875, -0.875}, {0.750, 0.125, 0.125, 0.125});
+            build_tesseract(&cell_elems, &cell_verts, {+0.00, -0.875, +0.875, +0.875}, {0.750, 0.125, 0.125, 0.125});
+            build_tesseract(&cell_elems, &cell_verts, {+0.00, +0.875, -0.875, -0.875}, {0.750, 0.125, 0.125, 0.125});
+            build_tesseract(&cell_elems, &cell_verts, {+0.00, +0.875, -0.875, +0.875}, {0.750, 0.125, 0.125, 0.125});
+            build_tesseract(&cell_elems, &cell_verts, {+0.00, +0.875, +0.875, -0.875}, {0.750, 0.125, 0.125, 0.125});
+            build_tesseract(&cell_elems, &cell_verts, {+0.00, +0.875, +0.875, +0.875}, {0.750, 0.125, 0.125, 0.125});
+        }
+        //endregion
+
+        //region cube frame
+        if (CUBE) {
+            build_tesseract(&cell_elems, &cell_verts, {-0.875, -0.875, +0.00, +0.00}, {0.125, 0.125, 1.000, 0.125});
+            build_tesseract(&cell_elems, &cell_verts, {-0.875, +0.875, +0.00, +0.00}, {0.125, 0.125, 1.000, 0.125});
+            build_tesseract(&cell_elems, &cell_verts, {+0.875, -0.875, +0.00, +0.00}, {0.125, 0.125, 1.000, 0.125});
+            build_tesseract(&cell_elems, &cell_verts, {+0.875, +0.875, +0.00, +0.00}, {0.125, 0.125, 1.000, 0.125});
+
+            build_tesseract(&cell_elems, &cell_verts, {-0.875, +0.00, -0.875, +0.00}, {0.125, 0.750, 0.125, 0.125});
+            build_tesseract(&cell_elems, &cell_verts, {-0.875, +0.00, +0.875, +0.00}, {0.125, 0.750, 0.125, 0.125});
+            build_tesseract(&cell_elems, &cell_verts, {+0.875, +0.00, -0.875, +0.00}, {0.125, 0.750, 0.125, 0.125});
+            build_tesseract(&cell_elems, &cell_verts, {+0.875, +0.00, +0.875, +0.00}, {0.125, 0.750, 0.125, 0.125});
+
+            build_tesseract(&cell_elems, &cell_verts, {+0.00, -0.875, -0.875, +0.00}, {0.750, 0.125, 0.125, 0.125});
+            build_tesseract(&cell_elems, &cell_verts, {+0.00, -0.875, +0.875, +0.00}, {0.750, 0.125, 0.125, 0.125});
+            build_tesseract(&cell_elems, &cell_verts, {+0.00, +0.875, -0.875, +0.00}, {0.750, 0.125, 0.125, 0.125});
+            build_tesseract(&cell_elems, &cell_verts, {+0.00, +0.875, +0.875, +0.00}, {0.750, 0.125, 0.125, 0.125});
+        }
+        //endregion
 
         matrices = {
             glm::identity<glm::mat4>(),
+            glm::vec4(0),
+
             glm::identity<glm::mat4>(),
             glm::identity<glm::mat4>(),
         };
@@ -191,9 +225,17 @@ class GLApp : public App {
         glfwGetFramebufferSize(getWindow(), &width, &height);
         float ratio = (float) width / height;
 
-        matrices.model =
-            rotor(glm::vec4(0, 1, 0, 0), glm::vec4(0, 0, 1, 0), getTime() / 4) *
-                rotor(glm::vec4(1, 1, 1, 0), glm::vec4(0, 0, 0, 1), getTime() / 5);
+        matrices.model = glm::identity<glm::mat4>() *
+//            rotor(glm::vec4(1, 0, 0, 0), glm::vec4(0, 1, 0, 0), getTime() / 5) *
+
+//            rotor(glm::vec4(1, 1, 1, 0), glm::vec4(0, 0, 0, 1), 1) *
+//            rotor(glm::vec4(1, 0, 0, 0), glm::vec4(0, 0, 0, 1), 1) *
+
+            rotor(glm::vec4(1, 1, 1, 0), glm::vec4(0, 0, 0, 1), getTime() / 4) *
+            rotor(glm::vec4(1, 0, 0, 0), glm::vec4(0, 0, 0, 1), getTime() / 5) *
+            1.f;
+
+//        matrices.offset.w = sin(getTime() / 3) * 1.8f;
 
         matrices.view = glm::lookAt(glm::vec3(0, 0, -4), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
         matrices.proj = glm::perspective(1.f, ratio, 0.1f, 20.0f);

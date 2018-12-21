@@ -9,6 +9,8 @@ layout(std430, binding=1) buffer Positions {
 
 layout(std140, binding=1) uniform Matrices {
     mat4 model;
+    vec4 offset;
+
     mat4 view;
     mat4 proj;
 };
@@ -19,13 +21,13 @@ out vec4 pos;
 
 void emit(vec4 v) {
     pos = v;
-    gl_Position = proj * view * vec4(v.xyz, -v.w + 3);
+    gl_Position = proj * view * vec4(v.xyz, 1 - v.w / 2);
     EmitVertex();
 }
 
 void main() {
     vec4 pos4[4];
-    for(int i = 0; i < 4; ++i) pos4[i] = model * verts[inds[0][i]];
+    for(int i = 0; i < 4; ++i) pos4[i] = offset + model * verts[inds[0][i]];
 
     for(int i = 0; i < 4; ++i) {
         for(int j = i + 1; j < 4; ++j) {
