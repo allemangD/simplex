@@ -15,7 +15,7 @@ target_include_directories(${PROJECT_NAME}
         include)
 
 set(SHADERS
-        shaders/main.frag
+        shaders/wire.frag
         shaders/main.vert)
 add_custom_target(shaders DEPENDS ${SHADERS})
 
