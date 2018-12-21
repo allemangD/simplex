@@ -39,7 +39,7 @@ class GLApp : public App {
     bool DRAW_WIRE = true;
 
     void init() override {
-        mesh = tesseract();
+        mesh = tesseract_frame(.125f);
 
         //region Uniforms
         matrices = {
@@ -107,11 +107,11 @@ class GLApp : public App {
         float ratio = (float) width / height;
 
         matrices.model = glm::identity<glm::mat4>() *
-            rotor(glm::vec4(1, 0, 0, 0), glm::vec4(0, 0, 0, 1), getTime() / 3) *
-            rotor(glm::vec4(0, 1, 0, 0), glm::vec4(0, 0, 1, 0), getTime() / 3) *
+//            rotor(glm::vec4(1, 0, 0, 0), glm::vec4(0, 0, 0, 1), getTime() / 3) *
+//            rotor(glm::vec4(0, 1, 0, 0), glm::vec4(0, 0, 1, 0), getTime() / 3) *
 
-//            rotor(glm::vec4(1, 1, 1, 0), glm::vec4(0, 0, 0, 1), getTime() / 3) *
-//            rotor(glm::vec4(1, 0, 0, 0), glm::vec4(0, 0, 1, 0), getTime() / 3) *
+            rotor(glm::vec4(1, 1, 1, 0), glm::vec4(0, 0, 0, 1), getTime() / 3) *
+            rotor(glm::vec4(1, 0, 0, 0), glm::vec4(0, 0, 1, 0), getTime() / 3) *
             1.f;
 
 //        matrices.offset = glm::vec4(0,0,0,sin(getTime() / 2));

@@ -121,8 +121,9 @@ Mesh<prim + 1> joinCap(Mesh<prim> m, Mesh<prim> n) {
     return concat(join(m, n), concat(fill(m), fill(n)));
 }
 
-Mesh<4> thicken(const Mesh<3> &m, float thickness) {
-    return joinCap(offset(m, glm::vec4(0, 0, 0, -thickness / 2)), offset(m, glm::vec4(0, 0, 0, thickness / 2)));
+template<unsigned int prim>
+Mesh<prim + 1> thicken(const Mesh<prim> &m, glm::vec4 width) {
+    return joinCap(m - width / 2.f, m + width / 2.f);
 }
 
 template<unsigned int prim>
@@ -148,5 +149,11 @@ Mesh<prim> operator/(Mesh<prim> m, float scl) { return scale(m, 1.f / scl); }
 
 template<unsigned int prim>
 Mesh<prim> operator*(glm::mat4 mat, Mesh<prim> m) { return transform(m, mat); }
+
+template<unsigned int prim>
+Mesh<prim> simplify(Mesh<prim> m) {
+    // todo remove redundant vertices and primitives
+    return Mesh<prim>({}, {});
+}
 
 #endif //SIMPLEX_MESH_H

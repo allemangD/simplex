@@ -47,4 +47,23 @@ Mesh<4> tesseract() {
         rot_zw(T) * pair;
 }
 
+Mesh<4> tesseract_frame(float width) {
+    Mesh<4> edge = tesseract() * glm::vec4(width, width, width, 1);
+    auto o = glm::vec3(1 - width);
+
+    Mesh<4> set = (edge + glm::vec4(+o.x, +o.y, +o.z, 0)) +
+            (edge + glm::vec4(+o.x, +o.y, -o.z, 0)) +
+            (edge + glm::vec4(+o.x, -o.y, +o.z, 0)) +
+            (edge + glm::vec4(+o.x, -o.y, -o.z, 0)) +
+            (edge + glm::vec4(-o.x, +o.y, +o.z, 0)) +
+            (edge + glm::vec4(-o.x, +o.y, -o.z, 0)) +
+            (edge + glm::vec4(-o.x, -o.y, +o.z, 0)) +
+            (edge + glm::vec4(-o.x, -o.y, -o.z, 0));
+
+    return set +
+        rot_xw(T) * set +
+        rot_yw(T) * set +
+        rot_zw(T) * set;
+}
+
 #endif //SIMPLEX_SOLIDS_H
