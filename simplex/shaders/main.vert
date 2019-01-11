@@ -12,5 +12,5 @@ out vec4 pos;
 
 void main() {
     pos = model * pos4;
-    gl_Position = proj * view * vec4(pos.xyz, -pos.w + 2);
+    gl_Position = proj * view * vec4(pos.xyz, 1);
 }
