@@ -1,11 +1,3 @@
-# OpenGL Application Template
+# Simplex Visualizations
 
-A template and framework for building OpenGL applications in C++. 
-
-### Libraries:
-
-* glad (OpenGL Bindings)
-* glfw (Window and OpenGL Context Management)
-* glm (Linear Algebra)
-
-Requires CMake 3.10+
+Features are being merged into https://github.com/JCRaymond/toddcox-faster. Favor that instead.
